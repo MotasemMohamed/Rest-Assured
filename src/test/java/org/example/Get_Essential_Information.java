@@ -1,10 +1,13 @@
 package org.example;
 
 import com.github.javafaker.Faker;
+import io.restassured.builder.RequestSpecBuilder;
 import io.restassured.http.ContentType;
 import io.restassured.path.json.JsonPath;
 import io.restassured.response.Response;
+import io.restassured.specification.RequestSpecification;
 import org.json.JSONObject;
+import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
 import static io.restassured.RestAssured.*;
@@ -20,30 +23,32 @@ public class Get_Essential_Information {
     String plateNumber = fakerdata.number().digits(4);
     private Integer IdAppointmentTransaction = 0;
     private Integer CancelappTrsId = 0;
+    private  static RequestSpecification BaseUrl ;
+    Add_Delegate_Appointment_Testcase  Add_object = new Add_Delegate_Appointment_Testcase();
 
         @Test (priority = 1)
         public void GetVehicleClasses ()
         {
-            Response res = given().relaxedHTTPSValidation().baseUri("Dumy URL").header("x-clientId", "000000")
-                    .when().get("Dummy End point").then().extract().response();
+            Response res = given().relaxedHTTPSValidation().spec(Add_object.BaseUrl).header("x-clientId", "000000")
+                    .when().get("Dummy End Point").then().extract().response();
             VehicleClassid = JsonPath.from(res.asString()).getInt("data[0].id");
-            given().relaxedHTTPSValidation().baseUri("https://172.16.25.200/api/inspectionAppFlowRest").header("x-clientId", "000000")
-                    .when().get("Dummy End point").then().assertThat().statusCode(200);
+            given().relaxedHTTPSValidation().spec(BaseUrl).header("x-clientId", "000000")
+                    .when().get("Dummy End Point").then().assertThat().statusCode(200);
         }
     @Test (priority = 2, dependsOnMethods = "GetVehicleClasses")
         public void GetServices ()
         {
-            Response response = given().relaxedHTTPSValidation().baseUri("Dumy URL").queryParam("vclClassId", VehicleClassid)
-                    .when().get("Dummy End point").then().extract().response();
+            Response response = given().relaxedHTTPSValidation().spec(BaseUrl).queryParam("vclClassId", VehicleClassid)
+                    .when().get("Dummy End Point").then().extract().response();
             serviceId = JsonPath.from(response.asString()).getInt("data[2].id");
-            given().relaxedHTTPSValidation().baseUri("Dumy URL").queryParam("vclClassId", VehicleClassid)
-                    .when().get("Dummy End point").then().assertThat().statusCode(200);
+            given().relaxedHTTPSValidation().spec(BaseUrl).queryParam("vclClassId", VehicleClassid)
+                    .when().get("Dummy End Point").then().assertThat().statusCode(200);
         }
     @Test (priority = 3, dependsOnMethods = "GetServices")
     public void getVTCZoneList ()
         {
-            given().relaxedHTTPSValidation().baseUri("Dumy URL").queryParams("vclClassId", VehicleClassid, "serviceId", serviceId)
-                    .when().get("Dummy End point").then().assertThat().statusCode(200);
+            given().relaxedHTTPSValidation().spec(BaseUrl).queryParams("vclClassId", VehicleClassid, "serviceId", serviceId)
+                    .when().get("Dummy End Point").then().assertThat().statusCode(200);
         }
     @Test (priority = 4, dependsOnMethods = "getVTCZoneList")
     public void Get_Available_Appointment_Time_Slots()
@@ -53,18 +58,18 @@ public class Get_Essential_Information {
         jsonObject.put("serviceId",serviceId);
         jsonObject.put("centerId","101");
         jsonObject.put("apointmentDayDate","03-01-2023");
-       Response res= given().relaxedHTTPSValidation().baseUri("Dumy URL").header("x-clientId","000000")
+       Response res= given().relaxedHTTPSValidation().spec(BaseUrl).header("x-clientId","000000")
                .contentType(ContentType.JSON).body(jsonObject.toString())
-                .when().post("Dummy End point").then().extract().response();
+                .when().post("Dummy End Point").then().extract().response();
 
         startTime= JsonPath.from(res.asString()).getString("data[0].startTime");
         endTime= JsonPath.from(res.asString()).getString("data[0].endTime");
         System.out.println(startTime);
         System.out.println(endTime);
 
-        given().relaxedHTTPSValidation().baseUri("Dumy URL").header("x-clientId","000000")
+        given().relaxedHTTPSValidation().spec(BaseUrl).header("x-clientId","000000")
                 .contentType(ContentType.JSON).body(jsonObject.toString())
-                .when().post("Dummy End point").then().assertThat().statusCode(200);
+                .when().post("Dummy End Point").then().assertThat().statusCode(200);
     }
 
     @Test (priority = 5, dependsOnMethods = "Get_Available_Appointment_Time_Slots")
@@ -101,17 +106,15 @@ public class Get_Essential_Information {
         aptDelegationObject.put("nationality",nationalityObject);
         jsonObject.put("aptDelegation",aptDelegationObject);
 
-        //System.out.println(jsonObject.toString());
-
-        Response res= given().relaxedHTTPSValidation().baseUri("Dumy URL").header("x-clientId","000000")
+        Response res= given().relaxedHTTPSValidation().spec(BaseUrl).header("x-clientId","000000")
                 .contentType(ContentType.JSON).body(jsonObject.toString())
-                .when().post("Dummy End point").then().extract().response();
+                .when().post("Dummy End Point").then().extract().response();
 
         AddappTrsId= JsonPath.from(res.asString()).getInt("data[0].appTrsId");
         System.out.println(AddappTrsId);
-        given().relaxedHTTPSValidation().baseUri("Dumy URL").header("x-clientId","000000")
+        given().relaxedHTTPSValidation().spec(BaseUrl).header("x-clientId","000000")
                 .contentType(ContentType.JSON).body(jsonObject.toString())
-                .when().post("Dummy End point").then().assertThat().statusCode(200);
+                .when().post("Dummy End Point").then().assertThat().statusCode(200);
     }
     @Test (priority = 6, dependsOnMethods = "BOOK_WITH_DELEGATION")
     public void  validate_SMS_Verify_Code_Add()
@@ -124,15 +127,15 @@ public class Get_Essential_Information {
 
         System.out.println(jsonObject.toString());
 
-        Response res= given().relaxedHTTPSValidation().baseUri("Dumy URL").header("x-clientId","000000")
+        Response res= given().relaxedHTTPSValidation().spec(BaseUrl).header("x-clientId","000000")
                 .contentType(ContentType.JSON).body(jsonObject.toString())
-                .when().post("Dummy End point").then().extract().response();
+                .when().post("Dummy End Point").then().extract().response();
 
         IdAppointmentTransaction= JsonPath.from(res.asString()).getInt("data[0].id");
         System.out.println(IdAppointmentTransaction);
-        given().relaxedHTTPSValidation().baseUri("Dumy URL").header("x-clientId","000000")
+        given().relaxedHTTPSValidation().spec(BaseUrl).header("x-clientId","000000")
                 .contentType(ContentType.JSON).body(jsonObject.toString())
-                .when().post("Dummy End point").then().assertThat().statusCode(200);
+                .when().post("Dummy End Point").then().assertThat().statusCode(200);
     }
     @Test
     public void  send_SMS_Verify_Code_cancel()
@@ -144,15 +147,15 @@ public class Get_Essential_Information {
 
         System.out.println(jsonObject.toString());
 
-        Response res= given().relaxedHTTPSValidation().baseUri("Dumy URL").header("x-clientId","000000")
+        Response res= given().relaxedHTTPSValidation().spec(BaseUrl).header("x-clientId","000000")
                 .contentType(ContentType.JSON).body(jsonObject.toString())
-                .when().post("Dummy End point").then().extract().response();
+                .when().post("Dummy End Point").then().extract().response();
 
        CancelappTrsId= JsonPath.from(res.asString()).getInt("data[0].appTrsId");
         System.out.println(CancelappTrsId);
-        given().relaxedHTTPSValidation().baseUri("Dumy URL").header("x-clientId","000000")
+        given().relaxedHTTPSValidation().spec(BaseUrl).header("x-clientId","000000")
                 .contentType(ContentType.JSON).body(jsonObject.toString())
-                .when().post("Dummy End point").then().assertThat().statusCode(200);
+                .when().post("Dummy End Point").then().assertThat().statusCode(200);
     }
     @Test
     public void  validate_SMS_Verify_Code_cancel()
@@ -163,12 +166,12 @@ public class Get_Essential_Information {
         jsonObject.put("operationMode",3);
         jsonObject.put("appTrsId",CancelappTrsId);
         System.out.println(jsonObject.toString());
-        Response res= given().relaxedHTTPSValidation().baseUri("Dumy URL").header("x-clientId","000000")
+        Response res= given().relaxedHTTPSValidation().spec(BaseUrl).header("x-clientId","000000")
                 .contentType(ContentType.JSON).body(jsonObject.toString())
-                .when().post("Dummy End point").then().extract().response();
-        given().relaxedHTTPSValidation().baseUri("Dumy URL").header("x-clientId","000000")
+                .when().post("Dummy End Point").then().extract().response();
+        given().relaxedHTTPSValidation().spec(BaseUrl).header("x-clientId","000000")
                 .contentType(ContentType.JSON).body(jsonObject.toString())
-                .when().post("Dummy End point").then().assertThat().statusCode(200);
+                .when().post("Dummy End Point").then().assertThat().statusCode(200);
     }
 
 }
